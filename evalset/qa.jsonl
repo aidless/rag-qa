@@ -1,16 +1,16 @@
-{"id": "p01", "type": "pos", "question": "每支队伍每天可以提交几次方案？", "source": "rules.md", "heading": "提交配额", "expect_contains": "5"}
-{"id": "p02", "type": "pos", "question": "当天 20:00 之后的提交怎么算？", "source": "rules.md", "heading": "提交配额", "expect_contains": "次日"}
-{"id": "p03", "type": "pos", "question": "连续多少天零提交会被移出活跃榜？", "source": "rules.md", "heading": "提交配额", "expect_contains": "3"}
-{"id": "p04", "type": "pos", "question": "正式对局是几局制？", "source": "rules.md", "heading": "对局与收局", "expect_contains": "7"}
-{"id": "p05", "type": "pos", "question": "每局最多多少个回合？", "source": "rules.md", "heading": "对局与收局", "expect_contains": "120"}
-{"id": "p06", "type": "pos", "question": "双方现金同时冻结时怎么判定胜负？", "source": "rules.md", "heading": "对局与收局", "expect_contains": "现金"}
-{"id": "p07", "type": "pos", "question": "平局会计入胜负序列或者重赛吗？", "source": "rules.md", "heading": "对局与收局", "expect_contains": "不计"}
-{"id": "p08", "type": "pos", "question": "天梯分是由局内现金差额决定的吗？", "source": "rules.md", "heading": "榜单与评分", "expect_contains": "胜/平/负"}
-{"id": "p09", "type": "pos", "question": "榜单多久重算一次？", "source": "rules.md", "heading": "榜单与评分", "expect_contains": "每小时"}
-{"id": "p10", "type": "pos", "question": "床数超过多少张后边际收益递减？", "source": "strategy.md", "heading": "床位规划", "expect_contains": "8"}
-{"id": "p11", "type": "pos", "question": "小麦连种两季后第三季后改种什么？", "source": "strategy.md", "heading": "轮作与闲置", "expect_contains": "玉米"}
-{"id": "p12", "type": "pos", "question": "动作从下发到生效平均延迟多久？", "source": "strategy.md", "heading": "时延假设", "expect_contains": "延迟"}
-{"id": "n01", "type": "neg", "question": "本比赛的总奖金额度是多少？"}
-{"id": "n02", "type": "neg", "question": "对局服务器的 GPU 显存规格是什么？"}
-{"id": "n03", "type": "neg", "question": "报名费需要在哪个页面缴纳？"}
-{"id": "n04", "type": "neg", "question": "主办方的联系电话是多少？"}
+{"id": "p01", "type": "pos", "question": "How many agents can a team submit per day?", "source": "overview_20260920.md", "heading": "Evaluation", "expect_contains": "up to 5 agents"}
+{"id": "p02", "type": "pos", "question": "How many submissions are tracked for matchmaking and final evaluation?", "source": "overview_20260920.md", "heading": "Evaluation", "expect_contains": "latest 2 submissions"}
+{"id": "p03", "type": "pos", "question": "How many turns does one game last?", "source": "overview_20260920.md", "heading": "Ranking System", "expect_contains": "720 turns"}
+{"id": "p04", "type": "pos", "question": "Does rating change depend on the coin margin or only on the outcome?", "source": "overview_20260920.md", "heading": "Ranking System", "expect_contains": "win, loss, or tie"}
+{"id": "p05", "type": "pos", "question": "What model produces the final leaderboard?", "source": "overview_20260920.md", "heading": "Final Evaluation", "expect_contains": "Bradley-Terry"}
+{"id": "p06", "type": "pos", "question": "When is the final submission deadline?", "source": "overview_20260920.md", "heading": "Timeline", "expect_contains": "September 30, 2026"}
+{"id": "p07", "type": "pos", "question": "When is the team merger deadline?", "source": "overview_20260920.md", "heading": "Timeline", "expect_contains": "September 23, 2026"}
+{"id": "p08", "type": "pos", "question": "What happens during the Validation Episode of a submission?", "source": "overview_20260920.md", "heading": "Evaluation", "expect_contains": "against a copy of itself"}
+{"id": "p09", "type": "pos", "question": "What rating does a new submission start from?", "source": "overview_20260920.md", "heading": "Evaluation", "expect_contains": "default rating"}
+{"id": "p10", "type": "pos", "question": "What is the prize for 1st place?", "source": "overview_20260920.md", "heading": "Prizes", "expect_contains": "5,000"}
+{"id": "p11", "type": "pos", "question": "What is the total prize pool of the competition?", "source": "rules_20260920.md", "heading": "5. TOTAL PRIZES AVAILABLE: $50,000", "expect_contains": "50,000"}
+{"id": "p12", "type": "pos", "question": "What is wheat's max yield with and without fertilizer?", "source": "overview_20260920.md", "heading": "Object Types", "expect_contains": "6 (4 unfertilized)"}
+{"id": "n01", "type": "neg", "question": "How much does it cost to register for the competition?"}
+{"id": "n02", "type": "neg", "question": "What GPU model runs the match servers?"}
+{"id": "n03", "type": "neg", "question": "In which city is the competition's data center located?"}
+{"id": "n04", "type": "neg", "question": "What material is the winner's trophy made of?"}

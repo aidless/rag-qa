@@ -32,4 +32,4 @@ def answer_offline(question, hits, has_evidence):
     """
     if not has_evidence:
         return "EVIDENCE_MISSING"
-    return hits[0]["text"][:160].strip() + " [S1]"
+    return hits[0]["text"][:800].strip() + " [S1]"

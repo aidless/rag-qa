@@ -38,7 +38,7 @@ def evaluate(strategy, items, offline):
     rows, pos, neg = [], [i for i in items if i["type"] == "pos"], [i for i in items if i["type"] == "neg"]
     for item in items:
         hits = r.search(item["question"], 5)
-        ev = r.has_evidence(hits)
+        ev = r.has_evidence(hits, item["question"])
         answer = answer_offline(item["question"], hits, ev) if offline else answer_online(item["question"], hits)
         rec5 = any(is_gold(h, item) for h in hits) if item["type"] == "pos" else None
         contains = (item["expect_contains"] in answer) if item["type"] == "pos" else None

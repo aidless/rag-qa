@@ -40,8 +40,9 @@ def test_retriever_finds_gold_offline(tmp_path):
     from pathlib import Path
     chunks = build_chunks(Path(__file__).resolve().parent.parent / "corpus", "structure")
     r = Retriever(chunks, offline=True)
-    hits = r.search("每支队伍每天可以提交几次方案", 5)
-    assert any(h["source"].endswith("rules.md") and h["section"].endswith("提交配额") for h in hits)
+    hits = r.search("How many agents can a team submit per day?", 5)
+    assert any(h["source"].endswith("overview_20260920.md") and h["section"].endswith("Evaluation")
+               for h in hits)
 
 
 def test_negatives_abstain_offline():
@@ -51,6 +52,8 @@ def test_negatives_abstain_offline():
     from ragqa.retrieve import Retriever
     chunks = build_chunks(Path(__file__).resolve().parent.parent / "corpus", "structure")
     r = Retriever(chunks, offline=True)
-    for q in ("本比赛的总奖金额度是多少？", "对局服务器的 GPU 显存规格是什么？",
-              "报名费需要在哪个页面缴纳？", "主办方的联系电话是多少？"):
-        assert not r.has_evidence(r.search(q, 5)), f"negative not abstained: {q}"
+    for q in ("How much does it cost to register for the competition?",
+              "What GPU model runs the match servers?",
+              "In which city is the competition's data center located?",
+              "What material is the winner's trophy made of?"):
+        assert not r.has_evidence(r.search(q, 5), q), f"negative not abstained: {q}"

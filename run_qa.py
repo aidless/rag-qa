@@ -35,7 +35,7 @@ def main():
     chunks = build_chunks(ROOT / "corpus", args.strategy)
     r = Retriever(chunks, offline=args.offline)
     hits = r.search(args.question, args.top_k)
-    ev = r.has_evidence(hits)
+    ev = r.has_evidence(hits, args.question)
     answer = (answer_offline(args.question, hits, ev) if args.offline
               else answer_online(args.question, hits))
     print(f"\n== 答案 ==\n{answer}\n")

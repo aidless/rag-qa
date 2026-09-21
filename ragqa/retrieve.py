@@ -18,6 +18,11 @@ def tokenize(text):
     return toks
 
 
+STOP = {"the", "of", "is", "to", "for", "in", "on", "a", "and", "or", "does",
+        "do", "what", "when", "which", "who", "how", "much", "many", "at",
+        "with", "by", "are", "was", "it", "its", "be", "any", "you", "your"}
+
+
 class Retriever:
     def __init__(self, chunks, offline=False):
         self.chunks = chunks
@@ -40,13 +45,22 @@ class Retriever:
                          "text": c["text"], "bm25": float(bq[i]), "cos": float(cos[i])})
         return hits
 
-    def has_evidence(self, hits):
+    def has_evidence(self, hits, query=""):
         """Abstain rule for negatives.
 
-        Thresholds calibrated on THIS small eval set (positives land at
-        bm25>=5, negatives<=1.7) — treat as dev-set tuned and recalibrate for
-        any new corpus/encoder, esp. real embeddings where the cos scale
-        differs.
+        Lexical BM25 alone failed on English: shared function-adjacent words
+        ("competition", "cost") pushed ALL four negatives above the score
+        floor. So we add a content-word coverage gate: fraction of non-stopword
+        query tokens appearing (substring) in the top chunk must be >= 0.75.
+        Both numbers are tuned on THIS 16-item set — recalibrate for a new
+        corpus, and expect real embeddings to change the cos scale.
         """
-        return (bool(hits) and (max(h["bm25"] for h in hits[:2]) >= 3.0
-                                or hits[0]["cos"] > 0.5))
+        if not hits:
+            return False
+        if max(h["bm25"] for h in hits[:2]) < 3.0 and hits[0]["cos"] <= 0.5:
+            return False
+        words = [t for t in WORD_RE.findall(query.lower()) if t not in STOP]
+        if not words:
+            return True
+        cov = sum(t in hits[0]["text"].lower() for t in words) / len(words)
+        return cov >= 0.75

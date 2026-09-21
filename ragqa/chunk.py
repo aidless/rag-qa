@@ -10,12 +10,23 @@ HEADING_RE = re.compile(r"^(#{1,6})\s+(.*)$")
 MIN_BLOCK = 60  # chars; smaller blocks merge into the previous one
 
 
+def _is_heading(line):
+    """Guard against false headings: tab-separated table rows and sentences
+    like '# PASS forever after.' that merely start with '#'."""
+    if "\t" in line:
+        return None
+    m = HEADING_RE.match(line)
+    if not m or m.group(2).strip().endswith((".", ";", ",")):
+        return None
+    return m
+
+
 def parse_sections(text):
     """Return [{section, start, end}] covering the whole text."""
     blocks, stack, cur = [], [], None
     pos = 0
     for line in text.split("\n"):
-        m = HEADING_RE.match(line)
+        m = _is_heading(line)
         if m:
             level, title = len(m.group(1)), m.group(2).strip()
             while stack and stack[-1][0] >= level:
@@ -46,6 +57,8 @@ def chunk_structure(text):
     for b in parse_sections(text):
         piece = {"section": b["section"], "text": text[b["start"]:b["end"]].strip()}
         if out and len(piece["text"]) < MIN_BLOCK:
+            # compound label so gold-heading endswith() still matches after merge
+            out[-1]["section"] += " + " + piece["section"]
             out[-1]["text"] += "\n\n" + piece["text"]
         else:
             out.append(piece)
