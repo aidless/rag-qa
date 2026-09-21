@@ -1,0 +1,16 @@
+{"id": "p01", "type": "pos", "question": "每支队伍每天可以提交几次方案？", "source": "rules.md", "heading": "提交配额", "expect_contains": "5"}
+{"id": "p02", "type": "pos", "question": "当天 20:00 之后的提交怎么算？", "source": "rules.md", "heading": "提交配额", "expect_contains": "次日"}
+{"id": "p03", "type": "pos", "question": "连续多少天零提交会被移出活跃榜？", "source": "rules.md", "heading": "提交配额", "expect_contains": "3"}
+{"id": "p04", "type": "pos", "question": "正式对局是几局制？", "source": "rules.md", "heading": "对局与收局", "expect_contains": "7"}
+{"id": "p05", "type": "pos", "question": "每局最多多少个回合？", "source": "rules.md", "heading": "对局与收局", "expect_contains": "120"}
+{"id": "p06", "type": "pos", "question": "双方现金同时冻结时怎么判定胜负？", "source": "rules.md", "heading": "对局与收局", "expect_contains": "现金"}
+{"id": "p07", "type": "pos", "question": "平局会计入胜负序列或者重赛吗？", "source": "rules.md", "heading": "对局与收局", "expect_contains": "不计"}
+{"id": "p08", "type": "pos", "question": "天梯分是由局内现金差额决定的吗？", "source": "rules.md", "heading": "榜单与评分", "expect_contains": "胜/平/负"}
+{"id": "p09", "type": "pos", "question": "榜单多久重算一次？", "source": "rules.md", "heading": "榜单与评分", "expect_contains": "每小时"}
+{"id": "p10", "type": "pos", "question": "床数超过多少张后边际收益递减？", "source": "strategy.md", "heading": "床位规划", "expect_contains": "8"}
+{"id": "p11", "type": "pos", "question": "小麦连种两季后第三季后改种什么？", "source": "strategy.md", "heading": "轮作与闲置", "expect_contains": "玉米"}
+{"id": "p12", "type": "pos", "question": "动作从下发到生效平均延迟多久？", "source": "strategy.md", "heading": "时延假设", "expect_contains": "延迟"}
+{"id": "n01", "type": "neg", "question": "本比赛的总奖金额度是多少？"}
+{"id": "n02", "type": "neg", "question": "对局服务器的 GPU 显存规格是什么？"}
+{"id": "n03", "type": "neg", "question": "报名费需要在哪个页面缴纳？"}
+{"id": "n04", "type": "neg", "question": "主办方的联系电话是多少？"}
