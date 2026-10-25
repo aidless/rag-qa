@@ -5,12 +5,14 @@ Sources live in the competition repo's browser evidence dir (captured
 2026-09-20 via logged-in browser, plaintext renders of public Kaggle pages).
 We slice + relabel; we never edit the substance of a rule sentence.
 """
+import os
 import re
 import sys
 from pathlib import Path
 
-EVID = Path("/home/liuzewen/Documents/Qoder/2026-09-18/fb67e4a9/repo"
-            "/.agent-memory/kagg-150k/evidence/browser_20260920")
+EVID = Path(os.environ.get(
+    "RAGQA_EVID_DIR",
+    ".agent-memory/kagg-150k/evidence/browser_20260920"))  # 比赛仓库的浏览器取证目录，本仓不含；用 RAGQA_EVID_DIR 指定
 OUT = Path(__file__).resolve().parent.parent / "corpus" / "official"
 
 NOISE = {"link", "keyboard_arrow_up", "keyboard_arrow_down", "chevron_right",
