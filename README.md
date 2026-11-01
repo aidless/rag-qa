@@ -14,6 +14,58 @@ Rules 的赛事特定条款，2026-09-20 登录态浏览器一手取证，抄录
   （bge-m3 一类），hash 编码器与 BM25 都对跨语言无能为力——这是升级项不是缺陷掩盖。
 - 拒答阈值（bm25≥3 + 内容词覆盖率≥0.75）标定在这 16 题上；语料或编码器一换必须重标。
 
+## 证明什么 / 不证明什么
+
+**证明什么（本仓内可复现）：**
+
+1. **混合检索接线正确**：`--offline` 冒烟表在 `fixed`/`structure` 两种切分策略下
+   分别复现 `recall@5 = 9/12` 与 `10/12`、`answer_hit = 2/12` 与 `3/12`、
+   `neg_abstain = 4/4`（见下方复算）。该表与 `results/eval-offline.jsonl`
+   （32 行逐项明细）逐字一致。
+2. **拒答判定有效**：4 个负样本全部 abstain（`neg_abstain = 4/4`）。这是回归测试
+   `test_negatives_abstain_offline` 锁死的——n02 曾靠哈希余弦噪声混过关（bm25=0
+   但 cos>旧阈值），修成按分数带标定（内容词覆盖率闸）。
+3. **检索与生成可分离**：`recall@5` 只依赖切分策略与编码器，与生成路径无关；
+   `answer_hit` 是抽取式下界。`recall` 与 `answer_hit` 的**落差本身**才是生成层
+   待办存在的证据（`structure`：10/12 recall vs 3/12 answer_hit）。
+4. **测试可运行**：`python3 -m pytest tests/ -q` → **6 passed**（`test_rag.py`：
+   section 解析、两种切分、tokenize 混合、gold 检索、负样本拒答）。
+
+**不证明什么（诚实边界）：**
+
+- **`--offline` 数字不是真实质量**：hash 三元组编码器 + 抽取式答案是"只证明接线
+  正确"的 plumbing check 与下界，行带 `encoder` 字段，跨编码器禁止比较。上线真
+  编码器/真生成器后必须重跑回填。
+- **不证明跨语言能力**：语料与评测问题都是英文；BM25 与 hash 编码器对中文查询
+  无能为力，需要真语义编码器（bge-m3 一类）。
+- **不证明检索质量泛化**：拒答阈值在这 16 题上标定，语料或编码器一换必须重标；
+  `has_evidence` docstring 记了两轮踩坑史。
+- **`structure 输给 fixed` 只对 p11 严格成立**：离线结果中 `p11` 是 structure
+  miss / fixed hit（严格输）；`p10` 是两者都 miss（平局）。README 的失败模式表说
+  "奖金题 structure 反输 fixed"——精确说是 **p11 严格反输，p10 平局**。
+- **`build_corpus_from_evidence.py` 需要外部取证目录**（本仓不含，用 `RAGQA_EVID_DIR`
+  指定）。没有该目录它抛 `FileNotFoundError`——这是如实边界，不是缺陷。
+
+## 复算（所有数字从本仓重算）
+
+```bash
+# 测试（6 passed）
+python3 -m pytest tests/ -q
+
+# 离线冒烟（重现 fixed 9/12 2/12 4/4；structure 10/12 3/12 4/4）
+python3 run_eval.py --offline
+
+# 逐项明细（32 行，含每题的 recall@5 / answer_contains / abstained）
+cat results/eval-offline.jsonl
+
+# 单题检索（离线）
+python3 run_qa.py "How many agents can a team submit per day?" --offline
+```
+
+> 注：`build_corpus_from_evidence.py` 需外部证据目录，不在本仓；`corpus/official/`
+> 的两个抄本（`overview_20260920.md`、`rules_20260920.md`）已带时间戳与来源页头注，
+> 是当前语料的一手来源。
+
 ## 快速开始
 
 ```bash
