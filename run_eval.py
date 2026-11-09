@@ -83,7 +83,8 @@ def main():
               f"| {s['neg_abstain']} | {s['n_pos']} | {s['n_neg']} |")
     if args.offline:
         print("NOTE: --offline = hash encoder + extractive answers; scores are a "
-              "plumbing check and a lower bound, not the product's real quality.")
+              "plumbing check and a lower bound, not the product's real quality. "
+              "scripts/check_readme_drift.py fails if README.md disagrees with this table.")
 
     out = Path(args.out or ROOT / "results" / f"eval-{'offline' if args.offline else 'online'}.jsonl")
     out.parent.mkdir(exist_ok=True)
