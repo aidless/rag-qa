@@ -1,83 +1,106 @@
-# rag-qa —— 竞赛规则问答 + 引用溯源 + 可分离评测
+# rag-qa
 
 [![CI](https://github.com/aidless/rag-qa/actions/workflows/ci.yml/badge.svg)](https://github.com/aidless/rag-qa/actions/workflows/ci.yml)
 
-小体量但完整的 RAG 管线：混合检索（BM25 ⊕ 向量，RRF 融合）、强制引用生成、
-拒答判定，以及**把检索和生成拆开打分**的评测集（12 正样本 + 4 负样本）。
+The image above is the GitHub Actions status for [`.github/workflows/ci.yml`](.github/workflows/ci.yml). This repo publishes no PyPI package and no coverage or download badge.
 
-语料 `corpus/official/` 是**官方页面的带时间戳抄本**（Overview/Evaluation 与
-Rules 的赛事特定条款，2026-09-20 登录态浏览器一手取证，抄录日期与来源页写在
-每个文件头部），由 `scripts/build_corpus_from_evidence.py` 切片生成——只加分节
-标题、去导航噪声，条文语句未改动。
+## Problem
 
-## 已知边界（会写进面试的实话）
+Contest-rules QA with forced citations: an answer quotes retrieved chunks as `[S#]`, or abstains with `EVIDENCE_MISSING`.
+Offline smoke (`python run_eval.py --offline`) is a hash-trigram encoder plus an extractive answer; online generation (`python run_qa.py`, `python run_eval.py` without `--offline`) calls an OpenAI-compatible LLM and is a separate path.
+Keep those paths apart. The offline smoke table in this file is the hash-encoder floor. This repo has no live embedding or LLM eval scores.
 
-- 评测问题是英文、语料是英文。中文查询跨语言检索需要真语义编码器
-  （bge-m3 一类），hash 编码器与 BM25 都对跨语言无能为力——这是升级项不是缺陷掩盖。
-- 拒答阈值（bm25≥3 + 内容词覆盖率≥0.75）标定在这 16 题上；语料或编码器一换必须重标。
+## STATUS
 
-## 快速开始
+**STATUS: WORK-IN-PROGRESS — not A yet.**
+
+Gaps that keep this at WIP:
+
+- The labeled set is 16 questions (12 positive, 4 negative). Abstain thresholds were fit on that set.
+- No live encoder run and no online LLM run is checked in. The offline table does not stand in for those scores.
+- `answer_hit` is an extractive floor (top chunk, first 800 characters).
+- The hash encoder fails cross-language queries; details are in FAILURE_MODES.
+- Gold match is `section.endswith(heading)`. On this run that definition misses a merged Prizes chunk and also suffix-matches `Final Evaluation`. Measured effects are in FAILURE_MODES. The table follows the code.
+
+## Offline path
+
+No API key and no model download. CI on Ubuntu, Python 3.12, runs the same three commands after `pip install -r requirements.txt`.
 
 ```bash
-python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
 .venv/bin/python -m pytest tests/ -q
-.venv/bin/python scripts/build_corpus_from_evidence.py  # 可选：从一手证据重建语料
-.venv/bin/python run_eval.py --offline      # 零网络自检
-cp .env.example .env                         # 填 OpenAI 兼容端点
-.venv/bin/python run_qa.py "How many turns does one game last?"  # 在线生成
-.venv/bin/python run_eval.py                # 在线评测
+.venv/bin/python run_eval.py --offline
+.venv/bin/python scripts/check_readme_drift.py
 ```
 
-## 架构
+`scripts/check_readme_drift.py` exits non-zero when the table, the command stdout, or `results/eval-offline.jsonl` disagree. Replace the table with the command output.
 
-```
-corpus/ ─ ingest ─┬─ chunk.py 两种策略：fixed(200字,重叠40) | structure(按标题)
-                  │      └── 两种策略共享同一 heading 映射 → gold 段可对齐
-                  └─ 每 chunk 带 {id, source, section, text}
-query ─ retrieve.py: BM25(ASCII词+CJK字二元) ⊕ cosine ──RRF──> top-5
-      ─ has_evidence() 不过 → 直接 EVIDENCE_MISSING（拒答）
-      ─ generate.py: 在线 LLM 强制 [S#] 引用 / 离线抽取式（同一引用格式）
+Measured 2026-11-09 on this machine, after `python3 -m venv` into an empty directory: `pip install -r requirements.txt` 6.4s, pytest 0.7s, `run_eval.py --offline` 0.2s, drift check 0.2s (7.5s combined). The install pulls PyPI packages only. No embedding weights are downloaded.
+
+`python scripts/build_corpus_from_evidence.py` rebuilds `corpus/official/` from a local evidence directory (`RAGQA_EVID_DIR`). That directory is not in this repo. The eval uses the checked-in transcripts.
+
+## Online path
+
+```bash
+cp .env.example .env   # LLM_API_KEY; optional LLM_BASE_URL, LLM_MODEL, EMBED_MODEL
+.venv/bin/python run_qa.py "How many turns does one game last?"
+.venv/bin/python run_eval.py
 ```
 
-## 离线冒烟结果（官方抄本语料）
+Online answers stay out of the table and out of `results/`. `results/eval-offline.jsonl` is the `--offline` per-item file.
+
+## Offline smoke results
+
+Command: `python run_eval.py --offline`. Index: every file under `corpus/` (`official/` transcripts and `sample/` placeholders). Checked 2026-11-09 with Python 3.12.3, rank-bm25 0.2.2, numpy 2.5.4.
+
+On this 16-question set, dropping `corpus/sample/` left per-item recall@5, answer_hit, neg_abstain, and the top chunk id unchanged for both chunkers. Sample files still change non-English queries; see FAILURE_MODES.
 
 | strategy | encoder | recall@5 | answer_hit | neg_abstain |
 |---|---|---|---|---|
 | fixed | hash-trigram | 9/12 | 2/12 | 4/4 |
 | structure | hash-trigram | 10/12 | 3/12 | 4/4 |
 
-怎么读这张表：**检索指标（recall@5）与生成路径无关**，切分策略差异不被生成器
-噪声掩盖；answer_hit 是抽取式下界（只有 top1 命中且事实在前 800 字符内才可能
-通过）——它的绝对值不重要，**与 recall 的落差本身**才是生成层待办存在的证据。
-structure 输给 fixed 的题（p10/p11 奖金题）见失败模式表。
-上线真编码器/真生成器后重跑并回填此表。
+recall@5 does not use the generator. `answer_hit` is true only when the expected span sits in the top chunk's first 800 characters, so the gap (fixed 9/12 recall vs 2/12 answer_hit, structure 10/12 vs 3/12) is unscored generation headroom.
 
-## 评测纪律（写在代码里的约束）
+## FAILURE_MODES
 
-- `--offline` 用 hash 三元组编码器 + 抽取式答案：只证明接线正确，结果行
-  带 `encoder` 字段，跨编码器禁止比较。
-- 拒答判定 = BM25 分带（≥3）∧ 内容词覆盖率闸（≥0.75），在本 16 题上标定后
-  由回归测试锁死；换语料/换真编码器必须重标——`has_evidence` docstring 写了
-  两轮踩坑史（先余弦噪声、后英文功能词抬分）。
-- 负样本泄漏过一次：n02 靠哈希余弦噪声混过关（bm25=0 但 cos>旧阈值），
-  修成按分数带标定并加了回归测试 `test_negatives_abstain_offline`。
-- gold 判定 = source 后缀 + section 尾部标题匹配，两种切分共享 heading
-  真值映射（`chunk.parse_sections`），否则 recall 对其中一种策略无意义。
+1. **Hash encoder, cross-language.** BM25 (ASCII words plus CJK bigrams) and the hash-trigram encoder do not translate. For `每天可以提交几个智能体` with structure chunks, the top hit is `corpus/sample/rules.md` (the file header says those numbers are fictional), `has_evidence` is true, and the offline answer quotes the placeholder (`5 次`). The official English `Evaluation` section is outside the top 5. The coverage gate tokenizes `[a-z0-9]+` only, so a CJK-only query skips the 0.75 check once the BM25/cosine gate has passed.
 
-## 失败模式手册（边跑边补）
+2. **Threshold overfit to 16 items.** `has_evidence` rejects a query when the best BM25 among the first two fused hits is below 3 and the top cosine is at most 0.5. Otherwise it requires at least 0.75 of the query's ASCII content words to occur in the top chunk. A query with no ASCII content words skips that coverage check. The cutoffs were tuned on these 16 questions after two negative leaks (hash cosine noise, then English function words). `test_negatives_abstain_offline` locks the four negatives. Retune when the corpus or the encoder changes.
 
-| 症状 | 根因 | 修法 |
+3. **Extractive `answer_hit` versus an LLM.** `answer_offline` returns `hits[0]["text"][:800]` plus ` [S1]`, or `EVIDENCE_MISSING`. It cannot read chunks 2–5 and it cannot synthesize. Fixed chunking recalls p11 (the `$50,000` total) inside the top 5, while the top chunk is `8. WINNER’S OBLIGATIONS`, so `answer_hit` is false. `answer_online` has no checked-in scores.
+
+4. **Gold match is `section.endswith(heading)`.** Source match is a path suffix, so nested files still count. On this run, `Final Evaluation` also satisfies heading `Evaluation`, but every positive item with that suffix collision also had the real `Evaluation` leaf inside the same top 5, so the published recall rates do not gain a hit from it. The other direction drops a hit: structure p10 has a rank-4 chunk labeled `Prizes + … / How to Play` whose text contains `5,000`, and `endswith("Prizes")` is false, so recall counts a miss. Fixed p10 does not place that section in the top 5. The table uses this definition.
+
+5. **Prize wording in a long block.** Structure p11 (`5. TOTAL PRIZES AVAILABLE: $50,000`) is outside the top 5. The top chunk is `8. WINNER’S OBLIGATIONS`. Fixed p11 reaches the gold section at rank 5 only, which is why recall passes and `answer_hit` does not. Splitting that block, or replacing the hash encoder, is future work.
+
+Fixes already in the tree, so they stay visible:
+
+| Symptom | Cause | What the code does now |
 |---|---|---|
-| recall@5=0 但 answer_hit 高 | source 路径含子目录，gold 精确匹配静默失败 | 后缀匹配 + 指标拆开看，矛盾即报警 |
-| 负样本误答（两轮） | ①哈希余弦噪声 ②英文功能词把 BM25 全部推过分底线 | 内容词覆盖率闸（`has_evidence`），回归测试锁死 |
-| 中文查询全 miss | BM25/hash 向量都不跨语言 | 语料英文→问题改英文；真语义编码器是升级项 |
-| 奖金题 structure 反输 fixed | WINNER'S OBLIGATIONS 巨型块反复含 "prize"，词法霸权 | 段内二次切分或真 embedding；已记待办 |
-| 小节标题被吞进邻节、gold 漂移 | `<60` 字符块并入前块时标签没跟着并 | 复合标签 `"A + B"`，endswith 匹配仍成立 |
-| 表格行 "# PASS forever after." 被当标题 | markdown 标题正则误吃以 `#` 开头的正文行 | `_is_heading` 加 tab/句号护栏 |
+| A negative was answered, twice | Hash cosine noise, then English function words lifting every BM25 | ASCII content-word coverage gate; the four negatives are a regression test |
+| A short section lost its heading | Blocks under 60 characters merge into the previous chunk | The label becomes `A + B` (item 4 is the remaining endswith miss) |
+| A prose line `# PASS forever after.` became a heading | The heading regex trusted a leading `#` | `_is_heading` rejects tab-separated lines and titles ending in `.` `;` `,` |
 
-## 待办
+## Architecture
 
-- [ ] 评测集扩到 30+10，每条标注出处段落（抄本行号）
-- [ ] 跑真 embedding（bge-m3）与 hash 的对照，确认阈值重标定后的表；顺手解锁中文查询
-- [ ] 巨型块（>4k 字符）段内二次切分，打穿"词法霸权"
-- [ ] LLM-as-judge 忠实度评分接进 run_eval（判分规则写进 README）
+```
+corpus/ ─ ingest ─┬─ chunk.py: fixed (200 characters, overlap 40) or structure (by heading)
+                  │    both use parse_sections, so each chunk carries a section label
+                  └─ chunk fields: id, source, section, text
+query ─ retrieve.py: BM25 (ASCII words + CJK bigrams) ⊕ cosine, RRF (k=60) → top 5
+      ─ has_evidence() false → EVIDENCE_MISSING
+      ─ generate.py: online LLM, citations [S#], or the offline extractive answer
+```
+
+`corpus/official/` is a timestamped transcript of the public Overview/Evaluation and Rules pages, captured 2026-09-20 in a logged-in browser. The source URL and time are in each file header. `scripts/build_corpus_from_evidence.py` adds headings and drops nav noise. `corpus/sample/` is a fictional placeholder and stays in the index.
+
+## Not done
+
+- [ ] Grow the set past these 16 questions, with a source line on each item
+- [ ] Run a real embedding against this hash floor, retune `has_evidence`, and record the command plus the date
+- [ ] Split sections of several thousand characters (Object Types, winner obligations)
+- [ ] Score online answers under a rubric written down next to a separate table
+
+Leave these open until the run that supports them is in the repo.

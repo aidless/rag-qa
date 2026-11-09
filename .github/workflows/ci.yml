@@ -12,3 +12,5 @@ jobs:
           python-version: "3.12"
       - run: pip install -r requirements.txt
       - run: python -m pytest tests/ -q
+      - run: python run_eval.py --offline
+      - run: python scripts/check_readme_drift.py
