@@ -1,5 +1,7 @@
 # rag-qa —— 竞赛规则问答 + 引用溯源 + 可分离评测
 
+[![CI](https://github.com/aidless/rag-qa/actions/workflows/ci.yml/badge.svg)](https://github.com/aidless/rag-qa/actions/workflows/ci.yml)
+
 小体量但完整的 RAG 管线：混合检索（BM25 ⊕ 向量，RRF 融合）、强制引用生成、
 拒答判定，以及**把检索和生成拆开打分**的评测集（12 正样本 + 4 负样本）。
 
