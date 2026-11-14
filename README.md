@@ -159,3 +159,44 @@ structure 输给 fixed 的题（p10/p11 奖金题）见失败模式表。
 - [ ] 跑真 embedding（bge-m3）与 hash 的对照，确认阈值重标定后的表；顺手解锁中文查询
 - [ ] 巨型块（>4k 字符）段内二次切分，打穿"词法霸权"
 - [ ] LLM-as-judge 忠实度评分接进 run_eval（判分规则写进 README）
+
+## 验收标准与复算
+
+**验收判据**：本仓判为合格的条件是 `python3 eval/run_cases.py` 通过率必须为 100%（20/20），且 `make eval` 退出码必须为 0；任何一条失败即判为不合格。判据本身也要能失败：`python3 eval/run_cases.py --selftest` 把首条 case 的期望值篡改后必须变红（19/20，exit 0）——若它仍然全绿，说明这套题是装饰。
+
+题库 `eval/cases.jsonl` 共 20 条，其中 19 条 `expr`/`raises` 直接调 `ragqa` 的 API 或解析本仓落盘文件（`corpus/`、`evalset/qa.jsonl`、`results/eval-offline.jsonl`），期望值是现场跑出来写进去的，不是抄文档的：
+
+| axis | 条数 | 测什么 |
+|---|---|---|
+| chunk/fixed | 1 | `chunk_fixed` 在 200/40 参数下的块数 |
+| chunk/structure | 1 | structure 策略在示例语料上的块数 |
+| chunk/merge | 1 | <60 字符末节并入前块后，复合标签仍 endswith 原标题 |
+| ingest/docs | 1 | `load_documents` 读到的文档数 |
+| ingest/chunks | 2 | 两种策略在全量语料上的 chunk 数（structure 50 / fixed 283） |
+| embed/hash | 2 | hash 编码器维度 256、逐行 L2 归一 |
+| retrieve/tokenize | 1 | ASCII 词 + CJK 二元组混合分词 |
+| retrieve/gold | 2 | gold 命中（p01）、p11 的 fixed−structure 严格反输 |
+| retrieve/abstain | 2 | n02 拒答、4 负样本 × 2 策略 8/8 拒答 |
+| generate/offline | 2 | `[S1]` 强制引用、无证据输出 `EVIDENCE_MISSING` |
+| evalset/shape | 1 | 题库条目数 16（12 正 4 负） |
+| results/replay | 2 | 逐项明细 32 行；structure recall 命中 10 且与现场重跑一致 |
+| error/guard | 1 | 未注册切分策略名抛 `KeyError`（未知策略必须显式失败） |
+| docs/spec | 1 | 本节判据句存在（自指门） |
+
+```bash
+python3 eval/run_cases.py            # 20/20；任一失败 exit 1
+python3 eval/run_cases.py --selftest # 篡改首条期望值 → 必须 19/20（exit 0）
+make eval                            # run_cases + pytest tests/，rc 必须为 0
+```
+
+**复算说明**：`python3 eval/run_cases.py --save` 把逐条结果写入 `eval/run-report.json`（含 `failed_by_axis`）；`results/eval-offline.jsonl` 与现场重跑由 RQ-18 绑在一起（`file_n != live_n` 时返回 -1 当场变红）。README 里的 9/12、10/12、2/12、3/12、4/4 全部可由 `python3 run_eval.py --offline` 重算。
+
+**失败归因**（按 axis 汇总，不只报一个 pass_rate）：`run_cases.py` 失败时打印形如
+
+```
+失败归因（按 axis）：
+  retrieve/gold: 1 条 —— RQ-11
+  results/replay: 1 条 —— RQ-18
+```
+
+失败先落到「切分 / 摄取 / 编码 / 检索 / 生成 / 题库 / 落盘 / 接口守卫」哪一层，再定位具体条目——与 `run_eval.py` 把 `recall@5`（检索层）与 `answer_hit`（生成层）拆开打分的口径一致。

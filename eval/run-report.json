@@ -1,0 +1,129 @@
+{
+ "total": 20,
+ "passed": 20,
+ "failed": 0,
+ "selftest": false,
+ "failed_by_axis": {},
+ "results": [
+  {
+   "id": "RQ-01",
+   "axis": "chunk/fixed",
+   "ok": true,
+   "detail": "3"
+  },
+  {
+   "id": "RQ-02",
+   "axis": "chunk/structure",
+   "ok": true,
+   "detail": "4"
+  },
+  {
+   "id": "RQ-03",
+   "axis": "chunk/merge",
+   "ok": true,
+   "detail": "True"
+  },
+  {
+   "id": "RQ-04",
+   "axis": "ingest/docs",
+   "ok": true,
+   "detail": "4"
+  },
+  {
+   "id": "RQ-05",
+   "axis": "ingest/chunks",
+   "ok": true,
+   "detail": "50"
+  },
+  {
+   "id": "RQ-06",
+   "axis": "ingest/chunks",
+   "ok": true,
+   "detail": "283"
+  },
+  {
+   "id": "RQ-07",
+   "axis": "embed/hash",
+   "ok": true,
+   "detail": "256"
+  },
+  {
+   "id": "RQ-08",
+   "axis": "embed/hash",
+   "ok": true,
+   "detail": "1.0"
+  },
+  {
+   "id": "RQ-09",
+   "axis": "retrieve/tokenize",
+   "ok": true,
+   "detail": "True"
+  },
+  {
+   "id": "RQ-10",
+   "axis": "retrieve/gold",
+   "ok": true,
+   "detail": "True"
+  },
+  {
+   "id": "RQ-11",
+   "axis": "retrieve/gold",
+   "ok": true,
+   "detail": "1"
+  },
+  {
+   "id": "RQ-12",
+   "axis": "retrieve/abstain",
+   "ok": true,
+   "detail": "False"
+  },
+  {
+   "id": "RQ-13",
+   "axis": "retrieve/abstain",
+   "ok": true,
+   "detail": "True"
+  },
+  {
+   "id": "RQ-14",
+   "axis": "generate/offline",
+   "ok": true,
+   "detail": "True"
+  },
+  {
+   "id": "RQ-15",
+   "axis": "generate/offline",
+   "ok": true,
+   "detail": "EVIDENCE_MISSING"
+  },
+  {
+   "id": "RQ-16",
+   "axis": "evalset/shape",
+   "ok": true,
+   "detail": "16"
+  },
+  {
+   "id": "RQ-17",
+   "axis": "results/replay",
+   "ok": true,
+   "detail": "32"
+  },
+  {
+   "id": "RQ-18",
+   "axis": "results/replay",
+   "ok": true,
+   "detail": "10"
+  },
+  {
+   "id": "RQ-19",
+   "axis": "error/guard",
+   "ok": true,
+   "detail": "raised KeyError"
+  },
+  {
+   "id": "RQ-20",
+   "axis": "docs/spec",
+   "ok": true,
+   "detail": "通过率必须为 100%"
+  }
+ ]
+}
